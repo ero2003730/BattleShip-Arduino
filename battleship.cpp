@@ -1,4 +1,5 @@
-
+#include <iostream>
+#include <string>
 
 const int ledPin1 = 2;
 const int ledPin2 = 4;
@@ -15,12 +16,25 @@ enum EstadoInterface
   ComecarJogo
 };
 
-unsigned long previousMillis = 0;
-unsigned long lastDebounceTime = 0;
+EstadoInterface State = InterfaceInicial;
 
-int State = 0;
-int buttonState;           // the current reading from the input pin
-int lastButtonState = LOW; // the previous reading from the input pin
+// Variáveis de debounce para cada botão
+unsigned long lastDebounceTime1 = 0;
+unsigned long lastDebounceTime2 = 0;
+unsigned long lastDebounceTime3 = 0;
+const long debounceDelay = 50; // debounce delay de 50 milissegundos
+
+int buttonState1 = LOW;
+int lastButtonState1 = LOW;
+int button1;
+
+int buttonState2 = LOW;
+int lastButtonState2 = LOW;
+int button2;
+
+int buttonState3 = LOW;
+int lastButtonState3 = LOW;
+int button3;
 
 bool mensagemMostrada = false;
 
@@ -29,62 +43,136 @@ void setup()
   pinMode(ledPin1, OUTPUT);
   pinMode(ledPin2, OUTPUT);
   pinMode(ledPin3, OUTPUT);
-  pinMode(buttonPin1, OUTPUT);
-  pinMode(buttonPin2, OUTPUT);
+  pinMode(buttonPin1, INPUT);
+  pinMode(buttonPin2, INPUT);
   pinMode(buttonPin3, INPUT);
-
   Serial.begin(9600);
 }
 
 void loop()
 {
+  // Verificação de debounce para cada botão
+  debounceButton1();
+  debounceButton2();
+  debounceButton3();
+
   switch (State)
   {
   case InterfaceInicial:
-  {
-    // Aciona os LEDs apenas uma vez
+
     if (!mensagemMostrada)
     {
       digitalWrite(ledPin1, HIGH);
       digitalWrite(ledPin2, HIGH);
       digitalWrite(ledPin3, HIGH);
 
-      Serial.println("Pressione o botao (1) para iniciar\n");
-      mensagemMostrada = true; // Impede que a mensagem seja exibida novamente
+      Serial.println("\n--------------------------------------\n");
+      Serial.println("Pressione o botao (1) para iniciar");
+      mensagemMostrada = true;
     }
 
-    if (Serial.available() > 0)
-    {
-      int flag = Serial.read(); // Lê o caractere recebido
-
-      // Converte o caractere para número e compara
-      if (flag == '1')
-      {
-        State = InterfaceDeSelecao;
-        mensagemMostrada = false; // Reseta a flag para a próxima vez
-      }
-
-      else
-      {
-        Serial.println("Usuario digitou algo diferente de 1, escreva novamente\n");
-        mensagemMostrada = false;
-      }
+    if (button1 == 1)
+    { // Se o botão 1 for pressionado, muda para InterfaceDeSelecao
+      State = InterfaceDeSelecao;
+      mensagemMostrada = false; // Reset mensagemMostrada para o próximo estado
+      button1 = 0;
     }
-  }
-  break;
+    break;
 
   case InterfaceDeSelecao:
-  {
-    // Aciona os LEDs apenas uma vez
+
     if (!mensagemMostrada)
     {
-      digitalWrite(ledPin1, LOW);
-      digitalWrite(ledPin2, LOW);
-      digitalWrite(ledPin3, LOW);
+      digitalWrite(ledPin1, HIGH);
+      digitalWrite(ledPin2, HIGH);
+      digitalWrite(ledPin3, HIGH);
 
-      Serial.println("Estado proximo\n");
-      mensagemMostrada = true; // Impede que a mensagem seja exibida novamente
+      Serial.println("\n--------------------------------------\n");
+      Serial.println("Pressione o botao (1) para escolher a posicao dos navios");
+      Serial.println("Pressione o botao (2) para iniciar o jogo");
+      mensagemMostrada = true;
+    }
+    if (button1 == 1)
+    {
+      State = InterfaceDePosicaoDosNavios;
+      mensagemMostrada = false;
+      button1 = 0;
+    }
+    else if (button2 == 1)
+    {
+      State = ComecarJogo;
+      mensagemMostrada = false;
+      button2 = 0;
+    }
+    break;
+  }
+}
+
+void debounceButton1()
+{
+  int reading = digitalRead(buttonPin1);
+
+  if (reading != lastButtonState1)
+    lastDebounceTime1 = millis();
+
+  if ((millis() - lastDebounceTime1) > 50)
+  {
+    if (reading != buttonState1)
+    {
+      buttonState1 = reading;
+
+      if (buttonState1 == HIGH)
+      {
+        button1 = 1;
+      }
     }
   }
+
+  lastButtonState1 = reading;
+}
+
+void debounceButton2()
+{
+  int reading = digitalRead(buttonPin2);
+
+  if (reading != lastButtonState2)
+    lastDebounceTime2 = millis();
+
+  if ((millis() - lastDebounceTime2) > 50)
+  {
+    if (reading != buttonState2)
+    {
+      buttonState2 = reading;
+
+      if (buttonState2 == HIGH)
+      {
+        button2 = 1;
+      }
+    }
   }
+
+  lastButtonState2 = reading;
+}
+
+void debounceButton3()
+{
+  int reading = digitalRead(buttonPin3);
+
+  if (reading != lastButtonState3)
+    lastDebounceTime3 = millis();
+
+  if ((millis() - lastDebounceTime3) > 50)
+  {
+    if (reading != buttonState3)
+    {
+      buttonState3 = reading;
+
+      if (buttonState3 == HIGH)
+      {
+        button3 = 1;
+      }
+    }
+  }
+
+  lastButtonState3 = reading;
 }
