@@ -1,6 +1,3 @@
-#include <iostream>
-#include <string>
-
 const int ledPin1 = 2;
 const int ledPin2 = 4;
 const int ledPin3 = 6;
@@ -13,7 +10,9 @@ enum EstadoInterface
   InterfaceInicial,
   InterfaceDeSelecao,
   InterfaceDePosicaoDosNavios,
-  ComecarJogo
+  ComecarJogo,
+  Torpedo,
+  Submarino
 };
 
 EstadoInterface State = InterfaceInicial;
@@ -59,7 +58,7 @@ void loop()
   switch (State)
   {
   case InterfaceInicial:
-
+  {
     if (!mensagemMostrada)
     {
       digitalWrite(ledPin1, HIGH);
@@ -77,10 +76,24 @@ void loop()
       mensagemMostrada = false; // Reset mensagemMostrada para o próximo estado
       button1 = 0;
     }
-    break;
+    else if (button2 == 1)
+    {
+      Serial.println("Pressione um botao valido");
+      mensagemMostrada = false; // Reset mensagemMostrada para o próximo estado
+      button2 = 0;
+    }
+
+    else if (button3 == 1)
+    {
+      Serial.println("Pressione um botao valido");
+      mensagemMostrada = false; // Reset mensagemMostrada para o próximo estado
+      button3 = 0;
+    }
+  }
+  break;
 
   case InterfaceDeSelecao:
-
+  {
     if (!mensagemMostrada)
     {
       digitalWrite(ledPin1, HIGH);
@@ -104,7 +117,52 @@ void loop()
       mensagemMostrada = false;
       button2 = 0;
     }
-    break;
+    else if (button3 == 1)
+    {
+      Serial.println("Pressione um botao valido");
+      mensagemMostrada = false;
+      button3 = 0;
+    }
+  }
+  break;
+
+  case InterfaceDePosicaoDosNavios:
+  {
+    if (!mensagemMostrada)
+    {
+      digitalWrite(ledPin1, HIGH);
+      digitalWrite(ledPin2, HIGH);
+      digitalWrite(ledPin3, HIGH);
+      Serial.println("\n--------------------------------------\n");
+      Serial.println("Pressione o botao (1) para escolher a posicao do torpedo");
+      Serial.println("Pressione o botao (2) para escolher a posicao do submarino");
+      Serial.println("Pressione o botao (3) para retornar");
+      mensagemMostrada = true;
+    }
+
+    if (button1 == 1)
+    {
+      State = Torpedo;
+      mensagemMostrada = false;
+      button1 = 0;
+    }
+    else if (button2 == 1)
+    {
+      State = Submarino;
+      mensagemMostrada = false;
+      button2 = 0;
+    }
+    else if (button3 == 1)
+    {
+      digitalWrite(ledPin1, LOW);
+      digitalWrite(ledPin2, LOW);
+      digitalWrite(ledPin3, HIGH);
+      State = InterfaceDeSelecao;
+      mensagemMostrada = false;
+      button3 = 0;
+    }
+  }
+  break;
   }
 }
 
