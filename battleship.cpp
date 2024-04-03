@@ -162,8 +162,26 @@ void loop()
     }
     else if (button2 == 1)
     {
-      State = ComecarJogo;
-      mensagemMostrada = false;
+      if (torpedo && submarino)
+      {
+        State = ComecarJogo;
+        mensagemMostrada = false;
+      }
+      else if (torpedo && !submarino)
+      {
+        Serial.println("Adicione o submarino antes");
+        mensagemMostrada = false;
+      }
+      else if (!torpedo && submarino)
+      {
+        Serial.println("Adicione o torpedo antes");
+        mensagemMostrada = false;
+      }
+      else
+      {
+        Serial.println("Adicione o torpedo e o submarino antes");
+        mensagemMostrada = false;
+      }
       button2 = 0;
     }
     else if (button3 == 1)
@@ -203,9 +221,6 @@ void loop()
     }
     else if (button3 == 1)
     {
-      digitalWrite(ledPin1, LOW);
-      digitalWrite(ledPin2, LOW);
-      digitalWrite(ledPin3, HIGH);
       State = InterfaceDeSelecao;
       mensagemMostrada = false;
       button3 = 0;
