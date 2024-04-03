@@ -15,7 +15,23 @@ enum EstadoInterface
   Submarino
 };
 
+enum EstadoTorpedo
+{
+  x1,
+  y1,
+  x2,
+  y2,
+  Verificacao
+};
+
+// Variáveis para controlar se a mensagem de prompt já foi exibida para cada estado
+bool mensagemX1Mostrada = false;
+bool mensagemY1Mostrada = false;
+bool mensagemX2Mostrada = false;
+bool mensagemY2Mostrada = false;
+
 EstadoInterface State = InterfaceInicial;
+EstadoTorpedo StateTorpedo = x1;
 
 // Variáveis de debounce para cada botão
 unsigned long lastDebounceTime1 = 0;
@@ -36,6 +52,21 @@ int lastButtonState3 = LOW;
 int button3;
 
 bool mensagemMostrada = false;
+
+int x1T;
+int y1T;
+int x2T;
+int y2T;
+
+int x1S;
+int y1S;
+int x2S;
+int y2S;
+int x3S;
+int y3S;
+
+bool valido;
+bool torpedo = false;
 
 void setup()
 {
@@ -163,6 +194,126 @@ void loop()
     }
   }
   break;
+
+  case Torpedo:
+  {
+    bool erroEncontrado = false;
+
+    if (!mensagemMostrada)
+    {
+      Serial.println("\n--------------------------------------\n");
+      Serial.println("Por favor, insira as coordenadas do torpedo.");
+      mensagemMostrada = true; // Corrige para 'true' para indicar que a mensagem foi mostrada
+    }
+
+    switch (StateTorpedo)
+    {
+    case x1:
+    {
+      if (!mensagemX1Mostrada)
+      {
+        Serial.println("Digite a primeira posicao horizontal (x): ");
+        mensagemX1Mostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        x1T = Serial.parseInt();
+        Serial.println(x1T);
+        StateTorpedo = y1; // Transiciona para o próximo estado
+        // Reseta a flag para permitir que a próxima mensagem seja mostrada
+        mensagemY1Mostrada = false;
+      }
+    }
+    break;
+
+    case y1:
+    {
+      if (!mensagemY1Mostrada)
+      {
+        Serial.println("Digite a primeira posicao vertical (y): ");
+        mensagemY1Mostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        y1T = Serial.parseInt();
+        Serial.println(y1T);
+        StateTorpedo = x2;
+        mensagemX2Mostrada = false;
+      }
+    }
+    break;
+
+    case x2:
+    {
+      if (!mensagemX2Mostrada)
+      {
+        Serial.println("Digite a segunda posicao horizontal (x): ");
+        mensagemX2Mostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        x2T = Serial.parseInt();
+        Serial.println(x2T);
+        StateTorpedo = y2;
+        mensagemY2Mostrada = false;
+      }
+    }
+    break;
+
+    case y2:
+    {
+      if (!mensagemY2Mostrada)
+      {
+        Serial.println("Digite a segunda posicao vertical (y): ");
+        mensagemY2Mostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        y2T = Serial.parseInt();
+        Serial.println(y2T);
+        StateTorpedo = Verificacao; // Transiciona para estado Completo
+      }
+    }
+    break;
+
+    case Verificacao:
+    {
+      if (!valoresEntre0e4(x1T, y1T, x2T, y2T))
+      {
+        erroEncontrado = true;
+        Serial.println("Erro: Valores devem estar entre 0 e 4.");
+      }
+      else if (!saoAdjacentes(x1T, y1T, x2T, y2T))
+      {
+        erroEncontrado = true;
+        Serial.println("Erro: Os pontos devem ser adjacentes verticalmente ou horizontalmente.");
+      }
+      if (erroEncontrado)
+      {
+        Serial.println("Coloque novamente os pontos.");
+        StateTorpedo = x1;
+        mensagemX1Mostrada = false;
+        mensagemY1Mostrada = false;
+        mensagemX2Mostrada = false;
+        mensagemY2Mostrada = false;
+      }
+      else
+      {
+        Serial.println("Pontos adicionados com sucesso.");
+        torpedo = true;
+        State = InterfaceDePosicaoDosNavios;
+        StateTorpedo = x1;
+        mensagemX1Mostrada = false;
+        mensagemY1Mostrada = false;
+        mensagemX2Mostrada = false;
+        mensagemY2Mostrada = false;
+        mensagemMostrada = false;
+      }
+    }
+    break;
+    }
+  }
+  break;
   }
 }
 
@@ -233,4 +384,29 @@ void debounceButton3()
   }
 
   lastButtonState3 = reading;
+}
+
+// Funcao para verificar se esta dentro de 0 e 4
+bool valoresEntre0e4(int x1, int y1, int x2, int y2)
+{
+  return x1 >= 0 && x1 <= 4 &&
+         y1 >= 0 && y1 <= 4 &&
+         x2 >= 0 && x2 <= 4 &&
+         y2 >= 0 && y2 <= 4;
+}
+
+// Funcao para verificar se são adjacentes
+bool saoAdjacentes(int x1, int y1, int x2, int y2)
+{
+  // Verifica adjacência horizontal
+  if (y1 == y2 && (x1 == x2 + 1 || x1 == x2 - 1))
+  {
+    return true;
+  }
+  // Verifica adjacência vertical
+  if (x1 == x2 && (y1 == y2 + 1 || y1 == y2 - 1))
+  {
+    return true;
+  }
+  return false;
 }
