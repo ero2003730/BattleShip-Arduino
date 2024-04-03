@@ -15,6 +15,8 @@ enum EstadoInterface
   Submarino
 };
 
+EstadoInterface State = InterfaceInicial;
+
 enum EstadoTorpedo
 {
   x1,
@@ -24,14 +26,43 @@ enum EstadoTorpedo
   Verificacao
 };
 
+int x1T;
+int y1T;
+int x2T;
+int y2T;
+
 // Variáveis para controlar se a mensagem de prompt já foi exibida para cada estado
 bool mensagemX1Mostrada = false;
 bool mensagemY1Mostrada = false;
 bool mensagemX2Mostrada = false;
 bool mensagemY2Mostrada = false;
 
-EstadoInterface State = InterfaceInicial;
 EstadoTorpedo StateTorpedo = x1;
+bool torpedo = false;
+
+enum EstadoSubmarino
+{
+  x1Su,
+  y1Su,
+  x3Su,
+  y3Su,
+  VerificacaoSu
+};
+
+int x1S;
+int y1S;
+int x2S;
+int y2S;
+int x3S;
+int y3S;
+
+bool mensagemX1SMostrada = false;
+bool mensagemY1SMostrada = false;
+bool mensagemX3SMostrada = false;
+bool mensagemY3SMostrada = false;
+bool submarino = false;
+
+EstadoSubmarino StateSubmarino = x1Su;
 
 // Variáveis de debounce para cada botão
 unsigned long lastDebounceTime1 = 0;
@@ -53,20 +84,7 @@ int button3;
 
 bool mensagemMostrada = false;
 
-int x1T;
-int y1T;
-int x2T;
-int y2T;
-
-int x1S;
-int y1S;
-int x2S;
-int y2S;
-int x3S;
-int y3S;
-
 bool valido;
-bool torpedo = false;
 
 void setup()
 {
@@ -314,6 +332,140 @@ void loop()
     }
   }
   break;
+
+  case Submarino:
+  {
+    bool erroEncontrado = false;
+
+    if (!mensagemMostrada)
+    {
+      Serial.println("\n--------------------------------------\n");
+      Serial.println("Por favor, insira as coordenadas do submarino.");
+      mensagemMostrada = true; // A mensagem foi mostrada
+    }
+
+    switch (StateSubmarino)
+    {
+    case x1Su:
+    {
+      if (!mensagemX1SMostrada)
+      {
+        Serial.println("Digite a primeira posicao horizontal do submarino (x1S): ");
+        mensagemX1SMostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        x1S = Serial.parseInt();
+        Serial.println(x1S);
+        StateSubmarino = y1Su; // Transiciona para o próximo estado
+        // Reseta a flag para permitir que a próxima mensagem seja mostrada
+        mensagemY1SMostrada = false;
+      }
+    }
+    break;
+
+    case y1Su:
+    {
+      if (!mensagemY1SMostrada)
+      {
+        Serial.println("Digite a primeira posicao vertical do submarino (y1S): ");
+        mensagemY1SMostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        y1S = Serial.parseInt();
+        Serial.println(y1S);
+        StateSubmarino = x3Su;
+        // Reseta a flag para permitir que a próxima mensagem seja mostrada
+        mensagemX3SMostrada = false;
+      }
+    }
+    break;
+
+    case x3Su:
+    {
+      if (!mensagemX3SMostrada)
+      {
+        Serial.println("Digite a ultima posicao horizontal do submarino (x3S): ");
+        mensagemX3SMostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        x3S = Serial.parseInt();
+        Serial.println(x3S);
+        StateSubmarino = y3Su;
+        // Reseta a flag para permitir que a próxima mensagem seja mostrada
+        mensagemY3SMostrada = false;
+      }
+    }
+    break;
+
+    case y3Su:
+    {
+      if (!mensagemY3SMostrada)
+      {
+        Serial.println("Digite a ultima posicao vertical do submarino (y3S): ");
+        mensagemY3SMostrada = true;
+      }
+      if (Serial.available() > 0)
+      {
+        y3S = Serial.parseInt();
+        Serial.println(y3S);
+        StateSubmarino = VerificacaoSu; // Prepara para verificação
+      }
+    }
+    break;
+
+    case VerificacaoSu:
+    {
+      // Calcular x2S e y2S com base em x1S, y1S, x3S, y3S
+      x2S = (x1S + x3S) / 2; // Ponto intermediário X
+      y2S = (y1S + y3S) / 2; // Ponto intermediário Y
+
+      if (!valoresEntre0e4(x1S, y1S, x3S, y3S) || !valoresEntre0e4(x2S, y2S, x2S, y2S))
+      {
+        erroEncontrado = true;
+        Serial.println("Erro: Valores devem estar entre 0 e 4.");
+      }
+      else if (!saoAdjacentes(x1S, y1S, x2S, y2S) || !saoAdjacentes(x2S, y2S, x3S, y3S))
+      {
+        erroEncontrado = true;
+        Serial.println("Erro: Os pontos do submarino devem ser adjacentes verticalmente ou horizontalmente e formar uma linha reta.");
+      }
+      else if (!coordenadasUnicas(x1T, y1T, x2T, y2T, x1S, y1S, x2S, y2S, x3S, y3S))
+      {
+        erroEncontrado = true;
+        Serial.println("Erro: As coordenadas do submarino não podem coincidir com as do torpedo.");
+      }
+
+      if (erroEncontrado)
+      {
+        Serial.println("Coloque novamente os pontos do submarino.");
+        StateSubmarino = x1Su;
+        // Reset das flags
+        mensagemX1SMostrada = false;
+        mensagemY1SMostrada = false;
+        mensagemX3SMostrada = false;
+        mensagemY3SMostrada = false;
+      }
+      else
+      {
+        Serial.println("Submarino adicionado com sucesso.");
+        submarino = true;
+        State = InterfaceDePosicaoDosNavios; // Transiciona para o próximo estado
+        // Reset das variáveis e flags para possíveis futuras inserções
+        StateSubmarino = x1Su;
+        mensagemX1SMostrada = false;
+        mensagemY1SMostrada = false;
+        mensagemX3SMostrada = false;
+        mensagemY3SMostrada = false;
+        mensagemMostrada = false;
+      }
+    }
+    break;
+    }
+  }
+  break;
   }
 }
 
@@ -409,4 +561,16 @@ bool saoAdjacentes(int x1, int y1, int x2, int y2)
     return true;
   }
   return false;
+}
+
+// Funcao para verificar se os pontos coincidem
+bool coordenadasUnicas(int x1T, int y1T, int x2T, int y2T, int x1S, int y1S, int x2S, int y2S, int x3S, int y3S)
+{
+  // Verifica se algum ponto do torpedo é igual a algum ponto do submarino
+  if ((x1T == x1S && y1T == y1S) || (x1T == x2S && y1T == y2S) || (x1T == x3S && y1T == y3S) ||
+      (x2T == x1S && y2T == y1S) || (x2T == x2S && y2T == y2S) || (x2T == x3S && y2T == y3S))
+  {
+    return false; // Ponto coincidente encontrado
+  }
+  return true; // Nenhum ponto coincidente encontrado
 }
