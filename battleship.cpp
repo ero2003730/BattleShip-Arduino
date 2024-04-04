@@ -656,8 +656,6 @@ void loop()
     {
     case Ataque:
     {
-      previousMillis = millis();
-
       if ((millis() - previousMillis) <= 30000)
       {
         digitalWrite(ledPin1, HIGH);
@@ -736,122 +734,125 @@ void loop()
         }
         bool alvoAcertado = false;
 
-        switch(StateAtaque)
+        switch (StateAtaque)
         {
-          case x:
+        case x:
+        {
+          if (!mensagemXAMostrada)
           {
-            if (!mensagemXAMostrada)
-            {
-              Serial.println("Por favor, insira a coordenada x do ataque.");
-              mensagemXAMostrada = true;
-            }
-            if (Serial.available() > 0)
-            {
-              xA = Serial.parseInt();
-              Serial.println(xA);
-              StateAtaque = y;
-            }
+            Serial.println("Por favor, insira a coordenada x do ataque.");
+            mensagemXAMostrada = true;
           }
-          break;
-
-          case y:
+          if (Serial.available() > 0)
           {
-            if (!mensagemYAMostrada)
-            {
-              Serial.println("Por favor, insira a coordenada y do ataque.");
-              mensagemYAMostrada = true;
-            }
-            if (Serial.available() > 0)
-            {
-              yA = Serial.parseInt();
-              Serial.println(yA);
-              StateAtaque = Ataq;
-            }
+            xA = Serial.parseInt();
+            Serial.println(xA);
+            StateAtaque = y;
           }
-          break;
+        }
+        break;
 
-          case Ataq:
+        case y:
+        {
+          if (!mensagemYAMostrada)
           {
+            Serial.println("Por favor, insira a coordenada y do ataque.");
+            mensagemYAMostrada = true;
+          }
+          if (Serial.available() > 0)
+          {
+            yA = Serial.parseInt();
+            Serial.println(yA);
+            StateAtaque = Ataq;
+          }
+        }
+        break;
+
+        case Ataq:
+        {
           // Verificação de coordenada já utilizada
-            bool coordenadaJaUtilizada = false;
-            for (int i = 0; i < totalAtaquesCertos; i++)
+          bool coordenadaJaUtilizada = false;
+          for (int i = 0; i < totalAtaquesCertos; i++)
+          {
+            if (ataquesCertos[i].x == xA && ataquesCertos[i].y == yA)
             {
-              if (ataquesCertos[i].x == xA && ataquesCertos[i].y == yA)
-              {
-                coordenadaJaUtilizada = true;
-                break;
-              }
+              coordenadaJaUtilizada = true;
+              break;
             }
-            for (int i = 0; i < totalAtaquesErrados; i++)
+          }
+          for (int i = 0; i < totalAtaquesErrados; i++)
+          {
+            if (ataquesErrados[i].x == xA && ataquesErrados[i].y == yA)
             {
-              if (ataquesErrados[i].x == xA && ataquesErrados[i].y == yA)
-              {
-                coordenadaJaUtilizada = true;
-                break;
-              }
+              coordenadaJaUtilizada = true;
+              break;
             }
+          }
 
-            if (coordenadaJaUtilizada)
+          if (coordenadaJaUtilizada)
+          {
+            // Reseta xA e yA após o ataque para evitar reprocessamento
+            xA = -1;
+            yA = -1;
+            Serial.println("Você já atacou essa coordenada. Por favor, escolha outra.");
+          }
+          else
+          { // Verifica se acertou o torpedeiro inimigo
+            if ((xA == x1Ti && yA == y1Ti) || (xA == x2Ti && yA == y2Ti))
+              alvoAcertado = true;
+
+            // Verifica se acertou o submarino inimigo
+            if ((xA == x1Si && yA == y1Si) || (xA == x2Si && yA == y2Si) || (xA == x3Si && yA == y3Si))
+              alvoAcertado = true;
+
+            if (alvoAcertado)
             {
-              // Reseta xA e yA após o ataque para evitar reprocessamento
-              xA = -1;
-              yA = -1;
-              Serial.println("Você já atacou essa coordenada. Por favor, escolha outra.");
+              Serial.println("Alvo localizado!");
+              ataquesCertos[totalAtaquesCertos].x = xA;
+              ataquesCertos[totalAtaquesCertos].y = yA;
+              totalAtaquesCertos++;
             }
             else
-            { // Verifica se acertou o torpedeiro inimigo
-              if ((xA == x1Ti && yA == y1Ti) || (xA == x2Ti && yA == y2Ti))
-                alvoAcertado = true;
+            {
+              Serial.println("Alvo perdido!");
+              ataquesErrados[totalAtaquesErrados].x = xA;
+              ataquesErrados[totalAtaquesErrados].y = yA;
+              totalAtaquesErrados++;
+            }
 
-              // Verifica se acertou o submarino inimigo
-              if ((xA == x1Si && yA == y1Si) || (xA == x2Si && yA == y2Si) || (xA == x3Si && yA == y3Si))
-                alvoAcertado = true;
-
-              if (alvoAcertado)
+            if (totalAtaquesCertos == 5)
+            {
+              digitalWrite(ledPin1, HIGH);
+              digitalWrite(ledPin2, HIGH);
+              digitalWrite(ledPin3, HIGH);
+              Serial.println("Parabens voce ganhou!");
+              State = JogoFinalizado;
+            }
+            else
+            {
+              if (xA != -1 && yA != -1)
               {
-                Serial.println("Alvo localizado!");
-                ataquesCertos[totalAtaquesCertos].x = xA;
-                ataquesCertos[totalAtaquesCertos].y = yA;
-                totalAtaquesCertos++;
-              }
-              else
-              {
-                Serial.println("Alvo perdido!");
-                ataquesErrados[totalAtaquesErrados].x = xA;
-                ataquesErrados[totalAtaquesErrados].y = yA;
-                totalAtaquesErrados++;
-              }
-
-              if (totalAtaquesCertos == 5)
-              {
-                digitalWrite(ledPin1, HIGH);
-                digitalWrite(ledPin2, HIGH);
-                digitalWrite(ledPin3, HIGH);
-                Serial.println("Parabens voce ganhou!");
-                State = JogoFinalizado;
-              }
-              else
-              {
-                if (xA != -1 && yA != -1)
-                {
-                  StateJogar = Defesa;
-                  // Reseta xA e yA após o ataque para evitar reprocessamento
-                  xA = -1;
-                  yA = -1;
-                }
+                StateJogar = Defesa;
+                // Reseta xA e yA após o ataque para evitar reprocessamento
+                xA = -1;
+                yA = -1;
+                StateAtaque = x;
+                previousMillis = millis();
               }
             }
           }
-          
-          previousMillis = millis();
-              }
         }
-
-        
-
-        
-
-        
+        }
+      }
+      else
+      {
+        Serial.println("Passou do tempo");
+        StateJogar = Defesa;
+        xA = -1;
+        yA = -1;
+        StateAtaque = x;
+        previousMillis = millis();
+      }
     }
     break;
 
@@ -940,6 +941,9 @@ void loop()
       else
       {
         StateJogar = Ataque; // Passa a vez para o jogador
+        StateAtaque = x;
+        mensagemXAMostrada = false;
+        mensagemYAMostrada = false;
       }
     }
     break;
