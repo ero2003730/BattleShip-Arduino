@@ -701,37 +701,17 @@ void loop()
 
         if (button3 == 1)
         {
-          if ((millis() - previousMillis) < 3000)
+          if (!botao3)
           {
-            if ((millis() - previousMillisTimer) >= 100)
-            {
-              previousMillisTimer = millis();
-
-              if (digitalRead(ledPin1) == HIGH)
-              {
-                digitalWrite(ledPin1, LOW);
-                digitalWrite(ledPin2, LOW);
-                digitalWrite(ledPin3, LOW);
-              }
-
-              else
-              {
-                digitalWrite(ledPin1, HIGH);
-                digitalWrite(ledPin2, HIGH);
-                digitalWrite(ledPin3, HIGH);
-              }
-            }
+            previousMillis = millis();
+            Serial.println("Jogador encerrou o jogo");
+            botao3 = true;
+            previousMillisTimer = millis();
           }
-          else
-          {
-            digitalWrite(ledPin1, LOW);
-            digitalWrite(ledPin2, LOW);
-            digitalWrite(ledPin3, LOW);
-
-            State = JogoFinalizado;
-            button3 = 0;
-          }
+          State = JogoFinalizado;
+          button3 = 0;
         }
+
         bool alvoAcertado = false;
 
         switch (StateAtaque)
@@ -955,7 +935,39 @@ void loop()
   break;
 
   case JogoFinalizado:
-    break;
+  {
+    if (botao3)
+    {
+      if ((millis() - previousMillis) < 3000)
+      {
+        if ((millis() - previousMillisTimer) >= 200)
+        {
+          previousMillisTimer = millis();
+
+          if (digitalRead(ledPin1) == HIGH)
+          {
+            digitalWrite(ledPin1, LOW);
+            digitalWrite(ledPin2, LOW);
+            digitalWrite(ledPin3, LOW);
+          }
+
+          else
+          {
+            digitalWrite(ledPin1, HIGH);
+            digitalWrite(ledPin2, HIGH);
+            digitalWrite(ledPin3, HIGH);
+          }
+        }
+      }
+      else
+      {
+        digitalWrite(ledPin1, LOW);
+        digitalWrite(ledPin2, LOW);
+        digitalWrite(ledPin3, LOW);
+      }
+    }
+  }
+  break;
 
   default:
     break;
