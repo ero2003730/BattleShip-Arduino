@@ -1,3 +1,4 @@
+// Variaveis dos pinos de entrada
 const int ledPin1 = 2;
 const int ledPin2 = 4;
 const int ledPin3 = 6;
@@ -5,6 +6,7 @@ const int buttonPin1 = 8;
 const int buttonPin2 = 10;
 const int buttonPin3 = 12;
 
+// Estados principais
 enum EstadoInterface
 {
   InterfaceInicial,
@@ -19,6 +21,7 @@ enum EstadoInterface
 
 EstadoInterface State = InterfaceInicial;
 
+// Subestado para o Estado Torpedo
 enum EstadoTorpedo
 {
   x1,
@@ -28,15 +31,7 @@ enum EstadoTorpedo
   Verificacao
 };
 
-enum EstadoAtaque
-{
-  x,
-  y,
-  Ataq
-};
-
-EstadoAtaque StateAtaque = x;
-
+// Variaveis que guardam as posicoes do torpedo
 int x1T;
 int y1T;
 int x2T;
@@ -47,10 +42,11 @@ bool mensagemX1Mostrada = false;
 bool mensagemY1Mostrada = false;
 bool mensagemX2Mostrada = false;
 bool mensagemY2Mostrada = false;
-
-EstadoTorpedo StateTorpedo = x1;
 bool torpedo = false;
 
+EstadoTorpedo StateTorpedo = x1;
+
+// Subestado para o Estado Submarino
 enum EstadoSubmarino
 {
   x1Su,
@@ -60,6 +56,7 @@ enum EstadoSubmarino
   VerificacaoSu
 };
 
+// Variaveis que guardam as posicoes do submarino
 int x1S;
 int y1S;
 int x2S;
@@ -67,6 +64,7 @@ int y2S;
 int x3S;
 int y3S;
 
+// Variáveis para controlar se a mensagem de prompt já foi exibida para cada estado
 bool mensagemX1SMostrada = false;
 bool mensagemY1SMostrada = false;
 bool mensagemX3SMostrada = false;
@@ -75,6 +73,7 @@ bool submarino = false;
 
 EstadoSubmarino StateSubmarino = x1Su;
 
+// Subestado para o estado de ComecarJogo
 enum EstadoJogar
 {
   Ataque,
@@ -83,12 +82,14 @@ enum EstadoJogar
 
 EstadoJogar StateJogar = Ataque;
 
+// Struct que armazenara a posicao dos ataques
 struct Atacar
 {
   int x;
   int y;
 };
 
+// Variaveis auxiliares para atacar
 Atacar ataquesErrados[20];
 int totalAtaquesErrados = 0;
 Atacar ataquesCertos[5];
@@ -100,12 +101,24 @@ bool mensagemYAMostrada = false;
 int xA = -1;
 int yA = -1;
 
+// Subestado do Subestado de ataque
+enum EstadoAtaque
+{
+  x,
+  y,
+  Ataq
+};
+
+EstadoAtaque StateAtaque = x;
+
+// Struct que armazenara a posicao da defesa (ataque do arduino)
 struct Defender
 {
   int x;
   int y;
 };
 
+// Variaveis auxiliares para defender
 Defender defesaErrados[20];
 int totaldefesaErrados = 0;
 Defender defesaCertos[5];
@@ -128,6 +141,7 @@ unsigned long previousMillis = 0;
 unsigned long previousMillisTimer = 0;
 const long debounceDelay = 50; // debounce delay de 50 milissegundos
 
+// Variaveis auxiliares para o debounce
 int buttonState1 = LOW;
 int lastButtonState1 = LOW;
 int button1;
@@ -143,6 +157,10 @@ int button3;
 bool mensagemMostrada = false;
 
 bool valido;
+bool botao3 = false;
+
+// ------------------------------------------------------------------------------------------------------- //
+// setup inicial
 
 void setup()
 {
@@ -156,6 +174,9 @@ void setup()
   Serial.begin(9600);
 }
 
+// ------------------------------------------------------------------------------------------------------- //
+// loop arduino
+
 void loop()
 {
   // Verificação de debounce para cada botão
@@ -163,8 +184,13 @@ void loop()
   debounceButton2();
   debounceButton3();
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // switch dos estados principais
   switch (State)
   {
+
+  // ------------------------------------------------------------------------------------------------------- //
+  // primeiro estado onde se inicia o processo
   case InterfaceInicial:
   {
     if (!mensagemMostrada)
@@ -185,14 +211,14 @@ void loop()
       button1 = 0;
     }
     else if (button2 == 1)
-    {
+    { // Se o botão 2 for pressionado, isso é um erro
       Serial.println("Pressione um botao valido");
       mensagemMostrada = false; // Reset mensagemMostrada para o próximo estado
       button2 = 0;
     }
 
     else if (button3 == 1)
-    {
+    { // Se o botão 3 for pressionado, isso é um erro
       Serial.println("Pressione um botao valido");
       mensagemMostrada = false; // Reset mensagemMostrada para o próximo estado
       button3 = 0;
@@ -200,6 +226,8 @@ void loop()
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // interface de selecao. Para escolher entre colocar navios ou iniciar
   case InterfaceDeSelecao:
   {
     if (!mensagemMostrada)
@@ -252,6 +280,8 @@ void loop()
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // interface de selecao. Para escolher qual navio vamos selecionar
   case InterfaceDePosicaoDosNavios:
   {
     if (!mensagemMostrada)
@@ -266,18 +296,26 @@ void loop()
       mensagemMostrada = true;
     }
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // se botao 1 for clicado entao ir para o estado do Torpedo
     if (button1 == 1)
     {
       State = Torpedo;
       mensagemMostrada = false;
       button1 = 0;
     }
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // se botao 2 for clicado entao ir para o estado do Submarino
     else if (button2 == 1)
     {
       State = Submarino;
       mensagemMostrada = false;
       button2 = 0;
     }
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // se botao 2 for clicado entao voltar para o estado de Selecao
     else if (button3 == 1)
     {
       State = InterfaceDeSelecao;
@@ -287,6 +325,8 @@ void loop()
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // inserir os valores no navio torpedeiro
   case Torpedo:
   {
     bool erroEncontrado = false;
@@ -298,8 +338,13 @@ void loop()
       mensagemMostrada = true; // Corrige para 'true' para indicar que a mensagem foi mostrada
     }
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // realizar uma maquina de estados que transita entre os estados (posicoes) do torpedeiro
     switch (StateTorpedo)
     {
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o x da primeira linha
     case x1:
     {
       if (!mensagemX1Mostrada)
@@ -315,10 +360,11 @@ void loop()
         // Reseta a flag para permitir que a próxima mensagem seja mostrada
         mensagemY1Mostrada = false;
       }
-      Serial.flush();
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o y da primeira linha
     case y1:
     {
       if (!mensagemY1Mostrada)
@@ -330,12 +376,15 @@ void loop()
       {
         y1T = Serial.parseInt();
         Serial.println(y1T);
-        StateTorpedo = x2;
+        StateTorpedo = x2; // Transiciona para o próximo estado
+        // Reseta a flag para permitir que a próxima mensagem seja mostrada
         mensagemX2Mostrada = false;
       }
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o x da segunda linha
     case x2:
     {
       if (!mensagemX2Mostrada)
@@ -347,12 +396,15 @@ void loop()
       {
         x2T = Serial.parseInt();
         Serial.println(x2T);
-        StateTorpedo = y2;
+        StateTorpedo = y2; // Transiciona para o próximo estado
+        // Reseta a flag para permitir que a próxima mensagem seja mostrada
         mensagemY2Mostrada = false;
       }
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o y da segunda linha
     case y2:
     {
       if (!mensagemY2Mostrada)
@@ -364,23 +416,34 @@ void loop()
       {
         y2T = Serial.parseInt();
         Serial.println(y2T);
-        StateTorpedo = Verificacao; // Transiciona para estado Completo
+        StateTorpedo = Verificacao; // Transiciona para estado Completo (de verificacao)
       }
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // etapa de verificacao das posicoes do torpedeiro
     case Verificacao:
     {
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // verificando para ver se as posicoes estao entre 0 e 4
       if (!valoresEntre0e4(x1T, y1T, x2T, y2T))
       {
         erroEncontrado = true;
         Serial.println("Erro: Valores devem estar entre 0 e 4.");
       }
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // verificando para ver se as posicoes (x1,y1) e (x2,y2) são adjacentes
       else if (!saoAdjacentes(x1T, y1T, x2T, y2T))
       {
         erroEncontrado = true;
         Serial.println("Erro: Os pontos devem ser adjacentes verticalmente ou horizontalmente.");
       }
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // se a flag for verdadeira, encontrou um erro, então tentar novamente colocar os valores
       if (erroEncontrado)
       {
         Serial.println("Coloque novamente os pontos.");
@@ -390,6 +453,9 @@ void loop()
         mensagemX2Mostrada = false;
         mensagemY2Mostrada = false;
       }
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // se nenhum erro for encontrado, entao voltar para a seção de escolher os navios
       else
       {
         Serial.println("Pontos adicionados com sucesso.");
@@ -412,6 +478,8 @@ void loop()
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // inserir os valores no navio submarino
   case Submarino:
   {
     bool erroEncontrado = false;
@@ -423,8 +491,13 @@ void loop()
       mensagemMostrada = true; // A mensagem foi mostrada
     }
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // realizar uma maquina de estados que transita entre os estados (posicoes) do submarino
     switch (StateSubmarino)
     {
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o x da primeira linha
     case x1Su:
     {
       if (!mensagemX1SMostrada)
@@ -443,6 +516,8 @@ void loop()
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o y da primeira linha
     case y1Su:
     {
       if (!mensagemY1SMostrada)
@@ -454,13 +529,15 @@ void loop()
       {
         y1S = Serial.parseInt();
         Serial.println(y1S);
-        StateSubmarino = x3Su;
+        StateSubmarino = x3Su; // Transiciona para o próximo estado
         // Reseta a flag para permitir que a próxima mensagem seja mostrada
         mensagemX3SMostrada = false;
       }
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o x da terceira linha
     case x3Su:
     {
       if (!mensagemX3SMostrada)
@@ -472,13 +549,15 @@ void loop()
       {
         x3S = Serial.parseInt();
         Serial.println(x3S);
-        StateSubmarino = y3Su;
+        StateSubmarino = y3Su; // Transiciona para o próximo estado
         // Reseta a flag para permitir que a próxima mensagem seja mostrada
         mensagemY3SMostrada = false;
       }
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // pegar o y da terceira linha
     case y3Su:
     {
       if (!mensagemY3SMostrada)
@@ -495,28 +574,40 @@ void loop()
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // etapa de verificacao das posicoes do torpedeiro
     case VerificacaoSu:
     {
       // Calcular x2S e y2S com base em x1S, y1S, x3S, y3S
       x2S = (x1S + x3S) / 2; // Ponto intermediário X
       y2S = (y1S + y3S) / 2; // Ponto intermediário Y
 
+      // ------------------------------------------------------------------------------------------------------- //
+      // verificando para ver se as posicoes estao entre 0 e 4
       if (!valoresEntre0e4(x1S, y1S, x3S, y3S) || !valoresEntre0e4(x2S, y2S, x2S, y2S))
       {
         erroEncontrado = true;
         Serial.println("Erro: Valores devem estar entre 0 e 4.");
       }
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // verificando para ver se as posicoes (x1,y1), (x2,y2) e (x2,y2), (x3,y3) são adjacentes
       else if (!saoAdjacentes(x1S, y1S, x2S, y2S) || !saoAdjacentes(x2S, y2S, x3S, y3S))
       {
         erroEncontrado = true;
         Serial.println("Erro: Os pontos do submarino devem ser adjacentes verticalmente ou horizontalmente e formar uma linha reta.");
       }
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // verificando para ver se os pontos do submarino e os do torpedo coincidem
       else if (!coordenadasUnicas(x1T, y1T, x2T, y2T, x1S, y1S, x2S, y2S, x3S, y3S))
       {
         erroEncontrado = true;
         Serial.println("Erro: As coordenadas do submarino não podem coincidir com as do torpedo.");
       }
 
+      // ------------------------------------------------------------------------------------------------------- //
+      // se a flag for verdadeira, encontrou um erro, então tentar novamente colocar os valores
       if (erroEncontrado)
       {
         Serial.println("Coloque novamente os pontos do submarino.");
@@ -527,6 +618,9 @@ void loop()
         mensagemX3SMostrada = false;
         mensagemY3SMostrada = false;
       }
+
+      // ------------------------------------------------------------------------------------------------------- //
+      // se nenhum erro for encontrado, entao voltar para a seção de escolher os navios
       else
       {
         Serial.println("Submarino adicionado com sucesso.");
@@ -550,6 +644,8 @@ void loop()
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // Estado que gera o topedo e submarino aleatorio para o arduino
   case ArduinoEscolhe:
   {
     // Geração aleatória do Torpedeiro
@@ -569,6 +665,9 @@ void loop()
     }
 
     bool posicaoValida; // Indica se a posição gerada é válida
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // uma estrtura de do while para repetir e achar uma combinacao valida para o submarino
     do
     {
       posicaoValida = true; // Assume inicialmente que a posição é válida
@@ -642,28 +741,39 @@ void loop()
       mensagemMostrada = true;
     }
 
+    // Depois de printar tudo comecar o jogo
     State = ComecarJogo;
     button1 = 0;
     button2 = 0;
     button3 = 0;
-
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // Estado que o jogo finalmente comeca
   case ComecarJogo:
   {
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // Subestado para controlar entre ataque e defesa
     switch (StateJogar)
     {
+
+    // ------------------------------------------------------------------------------------------------------- //
+    // Estado de Ataque
     case Ataque:
     {
+      // verificacao para ver se ja passou 30 segundos
       if ((millis() - previousMillis) <= 30000)
       {
         digitalWrite(ledPin1, HIGH);
         digitalWrite(ledPin2, LOW);
         digitalWrite(ledPin3, LOW);
 
+        // caso seja botao 1 ou 2, printar os valores das coordenas corretas ou incorretas
         if (button1 == 1 || button2 == 1)
         {
+          // verificacao para ver se acertou alguma coordenada
           if (totalAtaquesCertos == 0)
             Serial.println("O jogador nao acertou nenhuma coordenada");
           else
@@ -680,6 +790,7 @@ void loop()
             }
           }
 
+          // verificacao para ver se ja errou alguma coordenada
           if (totalAtaquesErrados == 0)
             Serial.println("O jogador nao errou nenhuma coodenada");
           else
@@ -699,23 +810,30 @@ void loop()
           button2 = 0;
         }
 
+        // caso seja botao 3, entao finalizar o jogo
         if (button3 == 1)
         {
+
           if (!botao3)
           {
             previousMillis = millis();
             Serial.println("Jogador encerrou o jogo");
-            botao3 = true;
+            botao3 = true; // setar para falar que veio do botao3
             previousMillisTimer = millis();
           }
-          State = JogoFinalizado;
+          State = JogoFinalizado; // mudar de estado para o final
           button3 = 0;
         }
 
         bool alvoAcertado = false;
 
+        // ------------------------------------------------------------------------------------------------------- //
+        // subestado do Ataque para o x
         switch (StateAtaque)
         {
+
+        // ------------------------------------------------------------------------------------------------------- //
+        // caso seja primeiro para colocar o valor de x
         case x:
         {
           if (!mensagemXAMostrada)
@@ -727,11 +845,13 @@ void loop()
           {
             xA = Serial.parseInt();
             Serial.println(xA);
-            StateAtaque = y;
+            StateAtaque = y; // mudar o estado para o y
           }
         }
         break;
 
+        // ------------------------------------------------------------------------------------------------------- //
+        // caso seja a hora de colocar eixo y
         case y:
         {
           if (!mensagemYAMostrada)
@@ -743,14 +863,16 @@ void loop()
           {
             yA = Serial.parseInt();
             Serial.println(yA);
-            StateAtaque = Ataq;
+            StateAtaque = Ataq; // mudar o estado para finalmente o ataque
           }
         }
         break;
 
+        // ------------------------------------------------------------------------------------------------------- //
+        // estado Ataque que as verificacoes acontecem
         case Ataq:
         {
-          // Verificação de coordenada já utilizada
+          // Verificação de coordenada já utilizada, basicamente verificando se o usuario ja tentou aquele ponto
           bool coordenadaJaUtilizada = false;
           for (int i = 0; i < totalAtaquesCertos; i++)
           {
@@ -769,6 +891,7 @@ void loop()
             }
           }
 
+          // caso ja tenha atacado aquela posicao pedir uma valida
           if (coordenadaJaUtilizada)
           {
             // Reseta xA e yA após o ataque para evitar reprocessamento
@@ -776,6 +899,8 @@ void loop()
             yA = -1;
             Serial.println("Você já atacou essa coordenada. Por favor, escolha outra.");
           }
+
+          // caso ainda nao tenha feito aquele ataque fazer as verificacoes
           else
           { // Verifica se acertou o torpedeiro inimigo
             if ((xA == x1Ti && yA == y1Ti) || (xA == x2Ti && yA == y2Ti))
@@ -785,6 +910,7 @@ void loop()
             if ((xA == x1Si && yA == y1Si) || (xA == x2Si && yA == y2Si) || (xA == x3Si && yA == y3Si))
               alvoAcertado = true;
 
+            // se o alvo foi acertado entao salvar as posicoes no vetor correto
             if (alvoAcertado)
             {
               Serial.println("Alvo localizado!");
@@ -792,6 +918,8 @@ void loop()
               ataquesCertos[totalAtaquesCertos].y = yA;
               totalAtaquesCertos++;
             }
+
+            // se o alvo foi errado entao salvar as posicoes no vetor errado
             else
             {
               Serial.println("Alvo perdido!");
@@ -800,19 +928,22 @@ void loop()
               totalAtaquesErrados++;
             }
 
+            // se acertar 5 vezes, significa que acertou todos entao encerrar jogo
             if (totalAtaquesCertos == 5)
             {
               digitalWrite(ledPin1, HIGH);
               digitalWrite(ledPin2, HIGH);
               digitalWrite(ledPin3, HIGH);
               Serial.println("Parabens voce ganhou!");
-              State = JogoFinalizado;
+              State = JogoFinalizado; // transicao para estado final
             }
+
+            // se ainda nao tiver acertado, e os valores tiverem sido inseridos
             else
             {
               if (xA != -1 && yA != -1)
               {
-                StateJogar = Defesa;
+                StateJogar = Defesa; // mudar para a vez do arduino
                 // Reseta xA e yA após o ataque para evitar reprocessamento
                 xA = -1;
                 yA = -1;
@@ -824,10 +955,12 @@ void loop()
         }
         }
       }
+
+      // caso tenha passado 30 segundos passar a vez
       else
       {
-        Serial.println("Passou do tempo");
-        StateJogar = Defesa;
+        Serial.println("Passou do tempo, sua vez foi 'pulada'");
+        StateJogar = Defesa; // mudar para a vez do arduino
         xA = -1;
         yA = -1;
         StateAtaque = x;
@@ -836,11 +969,14 @@ void loop()
     }
     break;
 
+    // ------------------------------------------------------------------------------------------------------- //
+    // estado de Defesa, que é o ataque do Arduino
     case Defesa:
     {
       bool coordenadaJaUtilizada;
       Defender coordenadaDefesa;
 
+      // estrutura de do while para achar uma posicao que ainda nao foi utilizado
       do
       {
         coordenadaJaUtilizada = false;
@@ -909,15 +1045,17 @@ void loop()
         Serial.println("Defesa errou.");
       }
 
-      // Verifica se o jogo terminou
+      // Verifica se o jogo terminou, se acertar 5 vezes acertou todos os pontos
       if (totaldefesaCertos == 5)
       {
         Serial.println("Jogo encerrado, Arduino ganhou");
         digitalWrite(ledPin1, HIGH);
         digitalWrite(ledPin2, HIGH);
         digitalWrite(ledPin3, HIGH);
-        State = JogoFinalizado;
+        State = JogoFinalizado; // transicao para o estado final
       }
+
+      // caso nao tenha passado entao voltar para o jogador atacar
       else
       {
         StateJogar = Ataque; // Passa a vez para o jogador
@@ -934,10 +1072,14 @@ void loop()
   }
   break;
 
+  // ------------------------------------------------------------------------------------------------------- //
+  // ultimo estado, que eh quando o jogo finaliza
   case JogoFinalizado:
   {
+    // verificaco para ver se veio do botao3, caso o usuario tenha encerrado por vontade propria
     if (botao3)
     {
+      // logica para fazer piscar os leds por 3 segundos
       if ((millis() - previousMillis) < 3000)
       {
         if ((millis() - previousMillisTimer) >= 200)
@@ -959,12 +1101,22 @@ void loop()
           }
         }
       }
+
+      // quando passar 3 segundos entao apenas desligar os leds
       else
       {
         digitalWrite(ledPin1, LOW);
         digitalWrite(ledPin2, LOW);
         digitalWrite(ledPin3, LOW);
       }
+    }
+
+    // caso nao venha do botao3, mas sim caso alguem tenha ganhado, entao apenas desligar os leds
+    else
+    {
+      digitalWrite(ledPin1, LOW);
+      digitalWrite(ledPin2, LOW);
+      digitalWrite(ledPin3, LOW);
     }
   }
   break;
@@ -974,6 +1126,8 @@ void loop()
   }
 }
 
+// ------------------------------------------------------------------------------------------------------- //
+// funcao do debounce para o primeiro botao
 void debounceButton1()
 {
   int reading = digitalRead(buttonPin1);
@@ -997,6 +1151,8 @@ void debounceButton1()
   lastButtonState1 = reading;
 }
 
+// ------------------------------------------------------------------------------------------------------- //
+// funcao do debounce para o segundo botao
 void debounceButton2()
 {
   int reading = digitalRead(buttonPin2);
@@ -1020,6 +1176,8 @@ void debounceButton2()
   lastButtonState2 = reading;
 }
 
+// ------------------------------------------------------------------------------------------------------- //
+// funcao do debounce para o terceiro botao
 void debounceButton3()
 {
   int reading = digitalRead(buttonPin3);
